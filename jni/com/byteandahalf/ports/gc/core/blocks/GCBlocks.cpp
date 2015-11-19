@@ -1,6 +1,7 @@
 #include "GCBlocks.h"
 #include "com/mojang/minecraftpe/world/level/block/Block.h"
 #include "com/mojang/minecraftpe/world/item/BlockItem.h"
+#include "com/mojang/minecraftpe/world/material/Material.h"
 
 #include "BlockBasic.h"
 #include "BlockFluidDynamicGC.h"
@@ -59,17 +60,24 @@ Block* GCBlocks::wallGC;
 
 
 void GCBlocks::initBlocks() {
-	basicBlock = new BlockBasic("gcBlockCore", 200);
+	basicBlock = new BlockBasic("gcBlockCore", getNewRandomID());
 
 	initFluids();
 	registerBlocks();
 }
 
 void GCBlocks::initFluids() {
-	crudeOilDynamic = new BlockFluidDynamicGC("crudeOilFlowing", 201, "oilFlowing");
-	crudeOilStatic = new BlockFluidStaticGC("crudeOilStill", 202, "oilStill");
-	fuelDynamic = new BlockFluidDynamicGC("fuelFlowing", 203, "fuelFlowing");
-	fuelStatic = new BlockFluidStaticGC("fuelStill", 204, "fuelStill");
+	crudeOilDynamic = new BlockFluidDynamicGC("crudeOilFlowing", getNewRandomID(), "oilFlowing");
+	crudeOilStatic = new BlockFluidStaticGC("crudeOilStill", getNewRandomID(), "oilStill");
+	fuelDynamic = new BlockFluidDynamicGC("fuelFlowing", getNewRandomID(), "fuelFlowing");
+	fuelStatic = new BlockFluidStaticGC("fuelStill", getNewRandomID(), "fuelStill");
+}
+
+void GCBlocks::initMaterials() {
+	std::unique_ptr<Material> oilMaterial(new Material(MaterialType::OIL, Material::Settings::Default, 0.0F));
+	oilMaterial->liquid = true;
+	oilMaterial->_setReplaceable();
+	Material::addMaterial(std::move(oilMaterial));
 }
 
 void GCBlocks::registerBlocks() {
@@ -84,4 +92,12 @@ void GCBlocks::registerBlock(Block* block) {
 	block->init();
 	Block::mBlocks[block->blockId] = block;
 	Item::mItems[block->blockId] = new BlockItem(block->getDescriptionId(), block->blockId - 0x100);
+}
+
+int GCBlocks::getNewRandomID() {
+	int id = 0;
+	while(Block::mOwnedBlocks[id] != NULL) {
+		id++;
+	}	
+	return id;
 }
